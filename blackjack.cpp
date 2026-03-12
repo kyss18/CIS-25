@@ -36,7 +36,7 @@ class Hand {
         }
         void show_card(){
             for (auto x:hand){
-                cout<<x.name_card<<" "<<x.type_card<<" "<<x.value<<"|";
+                cout<<x.name_card<<" "<<x.type_card<<" "<<"|";
             }
         }
         bool is_bust(){
@@ -116,7 +116,7 @@ class Deck {
         }
         void show_card(){
             for (int i=0;i<deck.size();i++){
-                cout<<deck[i].name_card<<" "<<deck[i].type_card<<" "<<deck[i].value<<endl;
+                cout<<deck[i].name_card<<" "<<deck[i].type_card<<" "<<endl;
             }
             
         }
@@ -142,7 +142,7 @@ class Player: public Hand {
         void take_balance (int bet_amount){
              balance-=bet_amount;
         }
-        void return_balance(int bet_amount){
+        void add_balance(int bet_amount){
              balance +=bet_amount;
         }
          double  get_balance(){
@@ -151,36 +151,212 @@ class Player: public Hand {
         bool is_less_than_16(){
             return score<16;
         }
-        
-        
-        
-
 };
 class Dealer: public Hand{
     public:
        bool check_greater_than_17(){
-            cout<<score<<endl;
             return score>=17;
        }
 };
-class BlackjackGame{
-    private:
-    int bet_amount;
-public:
-    void check_win(Player player,Dealer dealer){
-        if((player.is_black_jack()&& dealer.is_black_jack())|| (dealer.get_score()== player.get_score())){
-            cout<<"Tie";
-        }
-        else if (dealer.is_black_jack()|| (dealer.get_score()>player.get_score())){
-            cout<<"Dealer Win";
-        }
-        else if (player.is_black_jack()||(dealer.get_score()<player.get_score())){
-            cout<<"You Win";
-        }
+void show_card(Dealer dealer,Player player){
+        cout<<"Dealer Cards: ";
+        dealer.show_card();
+        cout<<"\nYour Cards:";
+        player.show_card();
+        cout<<endl;
+        cout<<"Your score:"<<player.get_score()<<endl;
+        cout<<"Dealer score:"<<dealer.get_score()<<endl;
     }
-    
-
-};
+bool ask_user_for_continue(int &selection,Player player){
+        cout<<"Your Balance:"<<player.get_balance()<<endl;
+        
+        cout << "Do you want to continue?\n";
+        cout << "1. Yes\n";
+        cout << "(Any number). Back to menu\n";
+        cout << "Your choice: ";
+        cin >> selection;
+        if(selection == 1){
+               return true;
+        }
+        return false;
+}
+int get_bet_amount(Player player){
+    int bet_amount;
+    do{
+        cout<<"Input your bet Amount: ";
+        cin>>bet_amount;
+        }while(bet_amount<0||bet_amount>player.get_balance());
+        return bet_amount;
+}
+void deal_initial_cards(Player &player, Deck &d,Dealer &dealer){
+    cout<<"-----------------------------"<<endl;
+    cout<<"Your balance: "<<player.get_balance()<<endl;
+    player.add_card(d.draw());
+    dealer.add_card(d.draw());
+    player.add_card(d.draw());
+    dealer.add_card(d.draw());
+    player.show_card();
+    cout<<"\nScore:"<<player.get_score();
+    cout<<endl;
+}
+bool check_blackjack(Dealer dealer,Player &player,int bet_amount){
+    if (dealer.is_black_jack() && player.is_black_jack()){
+            show_card(dealer,player);
+            cout<<"\nTie\n";
+            player.add_balance(bet_amount);
+            cout<<"You get: "<<bet_amount<<endl;
+                   return true; 
+                }
+        else if (dealer.is_black_jack()){
+            show_card(dealer,player);
+            cout<<"\nDealer win\n";
+                    return true;
+                }
+        else if (player.is_black_jack()){
+            show_card(dealer,player);
+            cout<<"\nYou Win\n";
+            player.set_balance_win(bet_amount);
+            cout<<"You get: "<<bet_amount*2<<endl;
+                    return true;
+                }
+            return false;
+}
+void player_turn(Player &player,Deck &d){
+    bool playing=true;
+    int selection;
+    do
+    {
+        cout<<"-----------------------------"<<endl;
+        cout<<"1.Draw more\n";
+        cout<<"2.Skip\n";
+        if(player.get_score()<16){
+            cout<<"You should draw more\n";
+        }
+        do{
+        cout<<"Your selection: ";
+        cin>>selection;
+        }while(selection < 1 || selection > 2);
+        cout<<"-----------------------------"<<endl;
+        switch (selection)
+        {
+        case 1:
+            player.add_card(d.draw());
+            player.show_card();
+            cout<<"\nScore:"<<player.get_score();
+            cout<<endl;
+            break;
+        case 2:
+            playing=false;
+            break;
+        }
+    } while (playing && !player.is_bust());
+}
+void dealer_turn(Dealer &dealer,Deck &d){
+    while(!dealer.check_greater_than_17())
+        {
+            dealer.add_card(d.draw());
+                            //dealer.show_card();
+        }
+}
+void compare_result(Dealer dealer,Player &player,int bet_amount){
+    if (dealer.get_score()== player.get_score()){
+        show_card(dealer,player);
+        cout<<"\n\tTie\n";
+        player.add_balance(bet_amount);
+        cout<<"You get:"<<bet_amount<<endl;
+        cout<<"-----------------------------"<<endl;
+        
+    }
+    else if((dealer.get_score()>player.get_score())&& !dealer.is_bust()){
+        show_card(dealer,player);
+        cout<<"\n\tDealer Win\n";
+        cout<<"-----------------------------"<<endl;                
+        }
+    else if ((dealer.get_score()<player.get_score()) && !player.is_bust()){
+        show_card(dealer,player);
+        cout<<"\n\tYou Win\n";
+        player.set_balance_win(bet_amount);
+        cout<<"You get: "<<bet_amount*2<<endl;
+        cout<<"-----------------------------"<<endl;
+    }
+    else {
+        show_card(dealer,player);
+        cout<<"\n\tYou Win\n";
+        player.set_balance_win(bet_amount);
+        cout<<"You get: "<<bet_amount*2<<endl;
+        cout<<"-----------------------------"<<endl;
+    }
+}
+void Play_game(Player &player){
+     
+    while(true){
+            if (player.get_balance() >0)
+                {
+                int bet_amount=get_bet_amount(player);
+                Deck d;
+                Dealer dealer;
+                player.clear_hand();
+                dealer.clear_hand();
+                player.take_balance(bet_amount);
+                deal_initial_cards(player,d,dealer);
+                int ask_continue;
+                if (check_blackjack(dealer,player,bet_amount)){
+                    if (!ask_user_for_continue(ask_continue,player))
+                            return;
+                }
+                else {
+                    player_turn(player,d);
+                    if(player.is_bust()){
+                        cout<<"\tYou lose\n";
+                        cout<<"-----------------------------"<<endl;
+                        if(!ask_user_for_continue(ask_continue,player))
+                            return;
+                    }
+                    else {
+                        dealer_turn(dealer,d);
+                        compare_result(dealer,player,bet_amount);
+                        if(!ask_user_for_continue(ask_continue,player))
+                            return;
+                    }
+                }
+            }
+        
+            else {
+                cout<<"-----------------------------"<<endl;
+                cout<<"Please deposit more money"<<endl;
+                cout<<"-----------------------------"<<endl;
+                break;
+            }
+        }
+}
+void deposit(Player &player){
+    double amount;
+    cout<<"Press \"-1\" to cancel deposit\n";
+    do {
+    cout << "How much would you like to deposit : ";
+    cin >> amount;
+    }while(amount<-1|| amount ==0);
+        if (amount >0) {
+            int choose;
+            do{
+                cout<<"Confirm deposit of $"<< amount<<" to your account? \n";
+                cout<<"1.Of course\n";
+                cout<<"2.No\n";
+                cout<<"Your option:";
+                cin>>choose;
+            }while(choose <1||choose>2);
+            if (choose ==1){
+                player.add_balance(amount);
+                cout<<"You deposited $"<<amount<<" successfully\n";
+            }
+            else {
+                cout<<"You canceled deposit\n";
+            }
+        }
+            else {
+                cout<<"You canceled deposit\n";
+            }
+}
  void Menu (){
     int balance;
     int choose_menu;
@@ -192,132 +368,53 @@ public:
     while (true){
     cout<<"\n===== BLACKJACK =====\n";
     cout<<"Balance: $"<<player.get_balance()<<endl;
-    cout<<"1. Play\n";
-    cout<<"2. Deposit\n";
-    cout<<"3. Check Balance\n";
-    cout<<"4. Exit\n";
+    cout<<"1. Play blackjack\n";
+    cout<<"2. Coin flip\n";
+    cout<<"3. Three-Card Game\n";
+    cout<<"4. Lucky Number\n";
+    cout<<"4. Deposit\n";
+    cout<<"5. Check Balance\n";
+    cout<<"6. Exit\n";
+    cout<<"7. Game history\n";
+    cout<<"8. Statistics\n";
     cout<<"Your option: ";
     cin>>choose_menu;
     switch(choose_menu){
         case 1:
-            if (player.get_balance() >=0)
-                {
-                int bet_amount;
-                do{
-                    cout<<"Input your bet Amount: ";
-                    cin>>bet_amount;
-                }while(bet_amount<0||bet_amount>player.get_balance());
-                Deck d;
-                //Player player(balance);
-                Dealer dealer;
-                BlackjackGame b;
-                player.clear_hand();
-                dealer.clear_hand();
-                player.take_balance(bet_amount);
-                cout<<"Your balance: "<<player.get_balance()<<endl;
-                player.add_card(d.draw());
-                dealer.add_card(d.draw());
-                player.add_card(d.draw());
-                dealer.add_card(d.draw());
-                player.show_card();
-                cout<<endl;
-                if (dealer.is_black_jack() && player.is_black_jack()){
-                    cout<<"Tie";
-                }
-                else if (dealer.is_black_jack()){
-                    cout<<"Dealer win\n";
-                    cout<<"Dealer card:";
-                    dealer.show_card();
-                }
-                else if (player.is_black_jack()){
-                    cout<<"You Win\n";
-                    cout<<"Dealer card:";
-                    dealer.show_card();
-                    player.set_balance_win(bet_amount);
-                }
-                else {
-                    bool playing=true;
-                    int selection;
-                    do
-                    {
-                        cout<<"1.Draw more\n";
-                        cout<<"2.Skip\n";
-                        cout<<"Your selection: ";
-                        cin>>selection;
-                        switch (selection)
-                        {
-                        case 1:
-                            player.add_card(d.draw());
-                            player.show_card();
-                            cout<<endl;
-                            break;
-                        case 2:
-                            playing=false;
-                            if (player.is_less_than_16()){
-                                cout<<"You lose";
-                            }
-                            break;
-                        default:
-                            break;
-                        }
-                    } while (playing && !player.is_bust());
-                    if(player.is_bust()){
-                        cout<<"You lose";
-                        
-                    }
-                    else {
-                        cout<<"Dealer\n";
-                        while(!dealer.check_greater_than_17())
-                        {
-                            dealer.add_card(d.draw());
-                            //dealer.show_card();
-                        }
-                        if (dealer.get_score()== player.get_score()){
-                            dealer.show_card();
-                            cout<<"Tie";
-                            player.return_balance(bet_amount);
-                        }
-                        else if((dealer.get_score()>player.get_score())&& !dealer.is_bust()){
-                            dealer.show_card();
-                            cout<<"Dealer Win";
-                            
-                        }
-                        else if ((dealer.get_score()<player.get_score()) && !player.is_bust()){
-                            dealer.show_card();
-                            cout<<"You Win";
-                            player.set_balance_win(bet_amount);
-                        }
-                        else {
-                            dealer.show_card();
-                            cout<<"You Win";
-                            player.set_balance_win(bet_amount);
-                        }
-                    }
-                }
-            }
-            else {
-                cout<<"Please deposit more money"<<endl;
-            }
+        Play_game(player);
         break;
         case 2:
-        {
-
-        }
-        break;
+            cout<<"To be continue\n";
+            break;
         case 3:
-        {
-            cout<<"Your balance:"<<balance<<endl;
-        }
-        break;
+            cout<<"To be continue\n";
+            break;
         case 4:
         {
-            return;
+            deposit(player);
         }
         break;
+        case 5:
+        {
+            cout<<"\n-----------------------------\n"<<endl;
+            cout<<"Your balance:"<<player.get_balance()<<endl;
+            cout<<"\n-----------------------------\n"<<endl;
+        }
+        break;
+        case 6:
+            cout<<"To be continue\n";
+            break;
+        case 7:
+            cout<<"To be continue\n";
+            break;
+        case 8:
+            cout<<"To be continue\n";
+            break;
         default:
             cout<<"Wrong Option";
             break;
         }
+        //system("cls");
     }
  }
 int main (){
