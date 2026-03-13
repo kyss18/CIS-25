@@ -10,8 +10,11 @@ double withdrawal(double account_balance,double amount){
     return account_balance - amount;
 }
 void deposit_input(double &account_balance,double amount){
+    int count=2;
+    do {
     cout << "Input your deposit : ";
     cin >> amount;
+    }while(amount<0&&count--);
         if (amount >0) {
             cout << "Deposit amount: " << amount << endl;
             account_balance=deposit(account_balance,amount);
@@ -21,12 +24,17 @@ void deposit_input(double &account_balance,double amount){
             }
 }
 void withdrawal_input(double &account_balance,double amount){
+        int count=2;
+                do{
+                cout << "Input your withdrawal amount: ";
+                cin >> amount;
+            }while((amount > account_balance || amount <0) && count-- );
                 if (amount <= account_balance && amount >0 ){
                     cout << "Withdrawal: " << amount << endl;
                     account_balance=withdrawal(account_balance,amount);
                 }
                 else 
-                    cout<<"Withdrawal must be smaller or equal and greater 0 than Account balance";
+                    cout<<"Withdrawal must be smaller or equal and greater 0 than Account balance\n";
 }
 int main()
 {
@@ -34,10 +42,13 @@ int main()
     double account_balance;
     double amount;
     int choose_menu;
+    int count=2;
     cout << "Input your name: ";
     getline(cin, user_name);
+    do{
     cout << "Please enter your balance amount: ";
     cin >> account_balance;
+    }while(account_balance<=0 && count--);
     if (account_balance >0) {
         while (true){
              cout<<user_name<<" Welcome to your account"<<endl;
@@ -55,11 +66,6 @@ int main()
         }
         
             case 2:{
-                 int count=2;
-                do{
-                cout << "Input your withdrawal amount: ";
-                cin >> amount;
-            }while((amount > account_balance || amount <0) && count-- );
                 withdrawal_input(account_balance,amount);
                 break;
             }
